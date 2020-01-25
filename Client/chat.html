@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Chat with @@NAME@@</title>
+        <style>
+            h1 {
+                color: #FFFFFF;
+            }
+            .msgTitle {
+                color:#FFFFFF;
+            }
+            .msgBody {
+                color:#FFFFFF;
+                font-size: 25px;
+                margin-top: 0px;
+            }
+            .myMSGBG {
+                background-color: #555555;
+            }
+            .yourMSGBG {
+                background-color: #AAAAAA;
+            }
+        </style>
+    </head>
+    <body style="background-color: black;">
+        <header style="background-color: #000000; padding-top: 10px;">
+            <h1 id="chatName">@@NAME@@</h1>
+            <input id="SMSValue" style="width: 80%;height: 30px;">
+            <button id="SMSSend" style="width: 15%;height: 36px;" onclick="sendMessage()">SEND MESSAGE</button>
+        </header>
+        <section id="chatContainer">
+            
+        </section>
+        <script>
+            var titleName = document.getElementById("chatName");
+            var chatID = document.URL.split("?")[1].split("=")[1];
+            var chatContent;
+            getChat();
+            function interpretateChat() {
+                var actualMaxID = Object.keys(chatContent).length;
+                var msgCont = document.getElementById("chatContainer");
+                for(var n = 1;n <=actualMaxID;n++) {
+                    var objPreProcess = chatContent["M" + n];
+                    if(objPreProcess.owner == getCookie("user")) {
+                        msgCont.innerHTML += `<section class="myMSGBG"><p class="msgTitle" style="text-align: right;"><i>${objPreProcess.owner} ${objPreProcess.date}</i></p><p class="msgBody" style="text-align: right;">${objPreProcess.msg}</p></section>`;
+                    } else {
+                        msgCont.innerHTML += `<section class="yourMSGBG"><p class="msgTitle"><i>${objPreProcess.owner} ${objPreProcess.date}</i></p><p class="msgBody">${objPreProcess.msg}</p></section>`;
+                    }
+                }
+            }
+            function getChat() {
+                const url = document.URL.split("?")[0];
+                const xhr = new XMLHttpRequest();
+                xhr.onload = function() {
+                    const responseData = JSON.parse(this.responseText);
+                    if(responseData.response == "OK") {
+                        chatContent = responseData.chat;
+                        titleName.innerText = responseData.name;
+                        interpretateChat();
+                    } else {
+                        console.log("Error!");
+                    }
+                };
+                xhr.open("POST", url);
+                var data  = JSON.stringify({"ASK":"GETCHAT","user":getCookie("user"),"token":getCookie("token"),"ID":chatID,"LEN":50});
+                xhr.setRequestHeader("Content-Type","application/json");
+                xhr.send(data);
+            }
+            function getCookie(name) {
+                var value = "; " + document.cookie;
+                var parts = value.split("; " + name + "=");
+                if (parts.length == 2) return parts.pop().split(";").shift();
+            }
+            function sendMessage() {
+                const url = document.URL.split("?")[0];
+                const xhr = new XMLHttpRequest();
+                xhr.onload = function() {
+                    const responseData = JSON.parse(this.responseText);
+                    if(responseData.response == "OK") {
+                        window.location.replace(document.URL);
+                    } else {
+                        console.log("Error!");
+                    }
+                };
+                xhr.open("POST", url);
+                var data  = JSON.stringify({"ASK":"SENDMSG","user":getCookie("user"),"token":getCookie("token"),"ID":chatID,"MSG":document.getElementById("SMSValue").value});
+                xhr.setRequestHeader("Content-Type","application/json");
+                xhr.send(data);
+            }
+            reloadWeb();
+            function reloadWeb() {
+                setTimeout(function () {
+                    const url = document.URL.split("?")[0];
+                const xhr = new XMLHttpRequest();
+                xhr.onload = function() {
+                    const responseData = JSON.parse(this.responseText);
+                    if(responseData.response == "OK") {
+                        var msgCont = document.getElementById("chatContainer");
+                        msgCont.innerHTML = "";
+                        chatContent = responseData.chat;
+                        interpretateChat();
+                    } else if(responseData.response == "NOUPDATES") {
+                        console.log("Nothing to update...");
+                    }
+                    reloadWeb();
+                };
+                xhr.open("POST", url);
+                var data  = JSON.stringify({"ASK":"GETNEWSMS","user":getCookie("user"),"token":getCookie("token"),"ID":chatID,"LASTMSG":Object.keys(chatContent).length});
+                xhr.setRequestHeader("Content-Type","application/json");
+                xhr.send(data);
+                }, 1000);
+            }
+        </script>
+    </body>
+</html>

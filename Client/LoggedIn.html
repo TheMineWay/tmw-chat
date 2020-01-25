@@ -1,0 +1,58 @@
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>User's page</title>
+        <style>
+            h1 {
+                font-size: 50px;
+                color: #FFFFFF;
+                text-align: center;
+            }
+            .styled {
+                font-size: 25px;
+            }
+        </style>
+    </head>  
+    <body style="background-color: black;">
+            <h1 id="usernameText">@@USER_NAME@@</h1>
+        <section style="padding-left: 25%;padding-right: 25%;background-color: #FFFFFF;">
+            <h2>CHATS</h2>
+            <section id="myChats"></section>
+        </section>
+        <script>
+            getContacts();
+            var title = document.getElementById("usernameText");
+            title.innerText = getCookie("user").toUpperCase();
+            function getCookie(name) {
+                var value = "; " + document.cookie;
+                var parts = value.split("; " + name + "=");
+                if (parts.length == 2) return parts.pop().split(";").shift();
+            }
+            function getContacts() {
+                const url = document.URL;
+                const xhr = new XMLHttpRequest();
+                var myContacts;
+                xhr.onload = function() {
+                    const responseData = JSON.parse(this.responseText);
+                    if(responseData.response == "CONTACTS") {
+                        myContacts = responseData;
+                        var contactsElement = document.getElementById("myChats");
+                        for(var k in responseData.contacts) {
+                            var deta = responseData.contacts[k].id;
+                            contactsElement.innerHTML += `<p class="styled" onclick=openChatWith("${deta}")>${k}</p>`;
+                        }
+                    } else {
+                        title.innerText = responseData.value;
+                    }
+                };
+                xhr.open("POST", url);
+                var data  = JSON.stringify({"ASK":"CONTACTS","user":getCookie("user"),"token":getCookie("token")});
+                xhr.setRequestHeader("Content-Type","application/json");
+                xhr.send(data);
+            }
+            function openChatWith(identify) {
+                window.location.replace(document.URL.replace("/session","") + "/chat?chatId=" + identify);
+            }
+        </script>
+    </body>
+</html>

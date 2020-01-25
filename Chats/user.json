@@ -1,0 +1,20 @@
+{
+    "response":"CONTACTS",
+    "contacts":{
+        "joel":{
+            "id":"0",
+            "date":"18/01/2020",
+            "tags":{
+
+            }
+        },
+        "themineway":{
+            "id":"1",
+            "date":"18/01/2020",
+            "tags":{
+
+            }
+            
+        }
+    }
+}

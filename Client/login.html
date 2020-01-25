@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Login</title>
+</head>
+<body style="background-color: #000000;text-align: center;">
+	<header style="background-color: #FF0000;">
+		<p style="color: #FFFFFF; padding-top: 10px;padding-bottom: 10px;margin-top: 0px;font-size: 20px;"><b>THIS SITE USES COOKIES FOR STORING SOME DATA RELATED TO THE WEB SERVICE</b></p>
+	</header>
+	<p id="serverResponse" style="color: rgb(253, 52, 52);"></p>
+	<h1 style="color: #FFFFFF;font-size: 90px;">SERVICE LOGIN</h1>
+	<p style="color: #FFFFFF;font-size: 40px;">USER </p>
+	<input type="text" name="user" style="width: 550px;height: 20px;" id="userIn">
+	<br>
+	<p style="color: #FFFFFF;font-size: 40px;">PASSWORD</p>
+	<input type="text" name="password" style="width: 550px;height: 20px;" id="passwordIn">
+	<br><br>
+	<button style="width: 550px;height: 50px;" onclick="logInProcess(false)">LOGIN</button>
+	<br><br>
+	<button id="cookieLogon" style="width: 550px;height: 50px;" onclick="logInProcess(true)">LOGIN WITH COOKIE DATA</button>
+	<script type="text/javascript">
+		var myCookies = document.cookie.split(';');
+		if(getCookie("user") == undefined)
+		{
+			document.getElementById("cookieLogon").remove();
+		}
+		function getCookie(name) {
+			var value = "; " + document.cookie;
+			var parts = value.split("; " + name + "=");
+			if (parts.length == 2) return parts.pop().split(";").shift();
+		}
+		function logInProcess(cookieIsUsed) {
+			var userdata;
+			if(cookieIsUsed == false) {
+				userdata = {
+				password: document.getElementById("passwordIn").value,
+				user: document.getElementById("userIn").value
+				};
+			}
+			else {
+				userdata = {
+				password: getCookie("password"),
+				user: getCookie("user")
+				};
+			}
+			if(userdata.password.includes('"') || userdata.user.includes('"')) {
+				document.getElementById("serverResponse").innerHTML = "INVALID DATA";
+				return;
+			}
+			const url = document.URL;
+			const xhr = new XMLHttpRequest();
+			xhr.onload = function() {
+				const serverResponse = document.getElementById("serverResponse");
+				const responseData = JSON.parse(this.responseText);
+				if(responseData.response == "TOKEN") {
+					serverResponse.innerHTML = responseData.token;
+					document.cookie = `user=${userdata.user}`;
+					document.cookie = `password=${userdata.password}`;
+					document.cookie = `token=${responseData.token}`;
+					getMsgPage();
+				} else if(responseData.response == "AUTHERROR") {
+					serverResponse.innerHTML = responseData.value;
+				} else if(responseData.response == "ERROR") {
+					serverResponse.innerHTML = responseData.value;
+				}
+			};
+			xhr.open("POST", url);
+			var data  = JSON.stringify({"user":userdata.user,"password":userdata.password});
+			xhr.setRequestHeader("Content-Type","application/json");
+			xhr.send(data);
+		}
+		function getMsgPage() {
+			/*const url = document.URL + "/getmsgpage";
+			const xhr = new XMLHttpRequest();
+			xhr.open("POST", url);
+			var data  = JSON.stringify({"ask":"Page"});
+			xhr.setRequestHeader("Content-Type","application/json");
+			xhr.send(data);*/
+			window.location.replace(document.URL.replace("/login","") + "/session");
+		}
+		</script>
+</body>
+</html>
